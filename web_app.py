@@ -1,6 +1,5 @@
 import json
 import re
-import sqlite3
 from datetime import datetime
 
 import streamlit as st
@@ -11,7 +10,11 @@ from google.oauth2.service_account import Credentials
 # 기본 설정
 # =========================================================
 st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", layout="centered")
-DB_PATH = "leads.db"
+
+# ✅ 구글시트 파일명(구글드라이브에서 보이는 문서 제목과 정확히 일치)
+GSHEET_NAME = "정책자금 툴"
+# ✅ 탭 이름(보통 첫 탭은 Sheet1). 네 시트 탭 이름이 다르면 바꿔줘
+GSHEET_WORKSHEET = "시트1"
 
 # =========================================================
 # UI 가독성 개선 CSS (드롭다운/입력칸)
@@ -55,91 +58,26 @@ label,
 </style>
 """, unsafe_allow_html=True)
 
-
 # =========================================================
-# DB 유틸 (자동 스키마 보정)
+# 구글시트 저장 유틸
 # =========================================================
-def get_conn():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+def get_gsheet_client():
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes,
+    )
+    return gspread.authorize(creds)
 
 
-def table_exists(conn, name: str) -> bool:
-    cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,))
-    return cur.fetchone() is not None
-
-
-def get_columns(conn, table: str) -> set:
-    cols = set()
-    for row in conn.execute(f"PRAGMA table_info({table})"):
-        cols.add(row[1])
-    return cols
-
-
-def ensure_db_schema():
+def append_to_sheet(row):
     """
-    과거에 만든 leads 테이블(예: phone NOT NULL 등)이 있어도 최대한 호환되도록 컬럼을 보정.
-    SQLite는 NOT NULL 변경이 까다로워서 'phone'이 있으면 반드시 값 넣는 방향으로 처리.
+    row: 시트에 추가할 1행 리스트
     """
-    with get_conn() as conn:
-        if not table_exists(conn, "leads"):
-            conn.execute("""
-            CREATE TABLE leads (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at TEXT NOT NULL,
-
-                customer_name TEXT NOT NULL,
-
-                phone TEXT NOT NULL,              -- 구형 스키마 호환용(필수)
-                phone_digits TEXT,
-                phone_formatted TEXT,
-
-                company_name TEXT,
-                biz_type TEXT,
-                industry TEXT,
-
-                business_years TEXT,
-                business_months INTEGER,
-
-                monthly_sales_raw TEXT,
-                monthly_sales_formatted TEXT,
-
-                tax_status TEXT,                  -- '완납' or '체납'
-
-                broker_check_json TEXT,           -- 체크리스트 결과 JSON
-                broker_is_risky INTEGER,          -- 1/0
-
-                result_json TEXT NOT NULL
-            )
-            """)
-            conn.commit()
-            return
-
-        existing = get_columns(conn, "leads")
-        needed = {
-            "created_at": "TEXT",
-            "customer_name": "TEXT",
-            "phone": "TEXT",  # 구형 호환 핵심
-            "phone_digits": "TEXT",
-            "phone_formatted": "TEXT",
-            "company_name": "TEXT",
-            "biz_type": "TEXT",
-            "industry": "TEXT",
-            "business_years": "TEXT",
-            "business_months": "INTEGER",
-            "monthly_sales_raw": "TEXT",
-            "monthly_sales_formatted": "TEXT",
-            "tax_status": "TEXT",
-            "broker_check_json": "TEXT",
-            "broker_is_risky": "INTEGER",
-            "result_json": "TEXT",
-        }
-        for col, ctype in needed.items():
-            if col not in existing:
-                conn.execute(f"ALTER TABLE leads ADD COLUMN {col} {ctype}")
-        conn.commit()
-
-
-ensure_db_schema()
+    client = get_gsheet_client()
+    sh = client.open(GSHEET_NAME)
+    ws = sh.worksheet(GSHEET_WORKSHEET)
+    ws.append_row(row, value_input_option="USER_ENTERED")
 
 
 # =========================================================
@@ -203,17 +141,6 @@ def grade_summary(g: str) -> str:
     return "현재 진행이 어려운 사유가 있어 담당자와 상담 후 진행 권장드립니다."
 
 
-def grade_fund(eligible_status: str, business_months: int, monthly_sales_manwon: int, tax_status: str) -> str:
-    """
-    C: 세금체납
-    A: (fund 룰 통과) + 업력 12개월 이상 + 월매출 1000만원 이상
-    B: 그 외
-    """
-    if tax_status == "체납":
-        return "C"
-    if eligible_status == "가능" and business_months >= 12 and monthly_sales_manwon >= 1000:
-        return "A"
-    return "B"
 def calc_final_grade(business_years: str, monthly_sales_manwon: int, tax_status: str) -> str:
     """
     최종 정책자금 판정 (자금명 무관, 1개 등급만)
@@ -228,7 +155,6 @@ def calc_final_grade(business_years: str, monthly_sales_manwon: int, tax_status:
         return "A"
 
     return "B"
-
 
 
 # =========================================================
@@ -246,7 +172,7 @@ def on_sales_change():
 
 
 # =========================================================
-# 정책자금 로드 / 판정 로직
+# 정책자금 로드 / 판정 로직 (룰은 유지)
 # =========================================================
 @st.cache_data
 def load_funds():
@@ -297,7 +223,7 @@ st.session_state.setdefault("broker_checks", {})
 # UI
 # =========================================================
 st.title("정책자금 조건 체크")
-st.caption("기본진단 및 적합판정을 위해 정확히 입력해주세요. ")
+st.caption("기본진단 및 적합판정을 위해 정확히 입력해주세요.")
 
 # =========================================================
 # STEP 1 - 기본 정보 입력
@@ -386,9 +312,7 @@ if st.session_state.step == 1:
         phone_formatted = format_phone_korea(phone_digits)
 
         sales_raw = (st.session_state.get("sales_input", "") or "").strip()
-        sales_formatted = (
-            format_sales_manwon(sales_raw) if parse_monthly_sales_to_manwon(sales_raw) else ""
-        )
+        sales_formatted = format_sales_manwon(sales_raw) if parse_monthly_sales_to_manwon(sales_raw) else ""
 
         st.session_state.step1_data = {
             "customer_name": customer_name.strip(),
@@ -488,7 +412,7 @@ if st.session_state.step == 2:
         do_submit = st.button("최종 판정 & 접수", use_container_width=True)
 
     # =========================
-    # 최종 판정 결과 + DB 저장
+    # 최종 판정 결과 + 구글시트 저장
     # =========================
     if do_submit:
         if not st.session_state.step1_data:
@@ -510,50 +434,32 @@ if st.session_state.step == 2:
         st.write(f"정책자금 판정 : {grade_label(final_grade)}")
         st.info(f"요약: {grade_summary(final_grade)}")
 
-        # DB 저장(접수)
-        broker_payload = {"answers": st.session_state.broker_checks, "checked_yes": checked_yes}
         broker_is_risky = 1 if checked_yes else 0
 
-        # ✅ result_json은 '최종등급' 중심으로 저장 (results 변수 없어서 에러 방지)
-        result_payload = {
-            "final_grade": final_grade,
-            "final_label": grade_label(final_grade),
-            "summary": grade_summary(final_grade),
-        }
+        # ✅ 구글시트 저장 (실사용)
+        try:
+            append_to_sheet([
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),   # 1 접수일시
+                s1.get("customer_name", ""),                    # 2 성함
+                s1.get("phone_formatted", ""),                  # 3 전화번호
+                s1.get("company_name", ""),                     # 4 상호명
+                s1.get("biz_type", ""),                         # 5 사업자 유형
+                s1.get("industry", ""),                         # 6 업종
+                s1.get("business_years", ""),                   # 7 업력
+                int(s1.get("business_months", 0)),              # 8 업력(개월)
+                parse_monthly_sales_to_manwon(
+                    s1.get("monthly_sales_raw", "")
+                ),                                              # 9 평균월매출(만원, 숫자)
+                s1.get("tax_status", ""),                       # 10 세금상태
+                "있음" if checked_yes else "없음",              # 11 브로커위험
+                grade_label(final_grade),                       # 12 판정등급
+                grade_summary(final_grade),                     # 13 판정요약
+            ])
 
-        with get_conn() as conn:
-            conn.execute(
-                """
-                INSERT INTO leads (
-                    created_at, customer_name, phone, phone_digits, phone_formatted,
-                    company_name, biz_type, industry, business_years, business_months,
-                    monthly_sales_raw, monthly_sales_formatted, tax_status,
-                    broker_check_json, broker_is_risky, result_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    datetime.now().isoformat(timespec="seconds"),
-                    s1.get("customer_name", ""),
-                    s1.get("phone_formatted", ""),  # phone NOT NULL 호환
-                    s1.get("phone_digits", ""),
-                    s1.get("phone_formatted", ""),
-                    s1.get("company_name", ""),
-                    s1.get("biz_type", ""),
-                    s1.get("industry", ""),
-                    s1.get("business_years", ""),
-                    int(s1.get("business_months", 0)),
-                    s1.get("monthly_sales_raw", ""),
-                    s1.get("monthly_sales_formatted", ""),
-                    s1.get("tax_status", ""),
-                    json.dumps(broker_payload, ensure_ascii=False),
-                    broker_is_risky,
-                    json.dumps(result_payload, ensure_ascii=False),
-                ),
-            )
-            conn.commit()
-
-        st.success("접수 기록이 저장되었습니다.")
+            st.success("접수 기록이 저장되었습니다.")
+        except Exception as e:
+            st.error("접수 저장에 실패했습니다. (구글시트 공유/시트명/탭명/Secrets 확인)")
+            st.exception(e)
 
     # ✅ STEP2 끝나면 아래 실행 방지
     st.stop()
-
