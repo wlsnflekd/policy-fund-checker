@@ -10,12 +10,6 @@ import requests
 # =========================================================
 st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", layout="centered")
 
-APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]        # Apps Script 웹앱 URL
-APPS_SCRIPT_TOKEN = st.secrets["APPS_SCRIPT_TOKEN"]    # 토큰(임의 문자열)
-
-# =========================================================
-# UI 가독성 개선 CSS (드롭다운/입력칸)
-# =========================================================
 st.markdown("""
 <style>
 /* ===============================
@@ -73,6 +67,9 @@ label,
 }
 </style>
 """, unsafe_allow_html=True)
+
+APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]        # Apps Script 웹앱 URL
+APPS_SCRIPT_TOKEN = st.secrets["APPS_SCRIPT_TOKEN"]    # 토큰(임의 문자열)
 
 # =========================================================
 # Apps Script 저장 유틸 (구글 서비스계정 제거)
@@ -458,4 +455,5 @@ if st.session_state.step == 2:
             st.write(msg)
 
     st.stop()
+
 
