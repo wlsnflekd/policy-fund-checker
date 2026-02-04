@@ -4,6 +4,8 @@ import sqlite3
 from datetime import datetime
 
 import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
 
 # =========================================================
 # 기본 설정
@@ -554,3 +556,4 @@ if st.session_state.step == 2:
 
     # ✅ STEP2 끝나면 아래 실행 방지
     st.stop()
+
