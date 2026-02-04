@@ -4,20 +4,14 @@ from datetime import datetime
 
 import streamlit as st
 import requests
-from google.oauth2.service_account import Credentials
 
 # =========================================================
 # 기본 설정
 # =========================================================
 st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", layout="centered")
 
-APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]   # 웹앱 URL
-APPS_SCRIPT_TOKEN = st.secrets["APPS_SCRIPT_TOKEN"]  # 토큰
-
-# ✅ 구글시트 파일명(구글드라이브에서 보이는 문서 제목과 정확히 일치)
-GSHEET_NAME = "정책자금 툴"
-# ✅ 탭 이름(보통 첫 탭은 Sheet1). 네 시트 탭 이름이 다르면 바꿔줘
-GSHEET_WORKSHEET = "시트1"
+APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]        # Apps Script 웹앱 URL
+APPS_SCRIPT_TOKEN = st.secrets["APPS_SCRIPT_TOKEN"]    # 토큰(임의 문자열)
 
 # =========================================================
 # UI 가독성 개선 CSS (드롭다운/입력칸)
@@ -62,33 +56,43 @@ label,
 """, unsafe_allow_html=True)
 
 # =========================================================
-# 구글시트 저장 유틸
+# Apps Script 저장 유틸 (구글 서비스계정 제거)
 # =========================================================
-def get_gsheet_client():
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"],
-        scopes=scopes,
-    )
-    return gspread.authorize(creds)
-
-
-def append_to_sheet(row):
+def append_to_sheet(row: list) -> tuple[bool, str]:
     """
     row: 시트에 추가할 1행 리스트
+    Apps Script Web App으로 row를 전달해서 appendRow 하도록 함.
+    return: (성공여부, 메시지)
     """
-    client = get_gsheet_client()
-    sh = client.open(GSHEET_NAME)
-    ws = sh.worksheet(GSHEET_WORKSHEET)
-    ws.append_row(row, value_input_option="USER_ENTERED")
+    try:
+        res = requests.post(
+            APPS_SCRIPT_URL,
+            json={
+                "token": APPS_SCRIPT_TOKEN,
+                "action": "append_row",
+                "row": row,
+            },
+            timeout=15,
+        )
 
+        # Apps Script가 JSON을 못 주고 text로 주는 경우도 대비
+        try:
+            out = res.json()
+        except Exception:
+            out = {"ok": res.ok, "message": res.text}
+
+        if res.ok and out.get("ok") is True:
+            return True, out.get("message", "저장 완료")
+        return False, out.get("message", f"저장 실패 (HTTP {res.status_code})")
+
+    except Exception as e:
+        return False, f"저장 요청 예외: {e}"
 
 # =========================================================
 # 포맷/검증 유틸
 # =========================================================
 def only_digits(s: str) -> str:
     return re.sub(r"[^0-9]", "", s or "")
-
 
 def format_phone_korea(raw: str) -> str:
     d = only_digits(raw)
@@ -98,11 +102,9 @@ def format_phone_korea(raw: str) -> str:
         return f"{d[0:3]}-{d[3:6]}-{d[6:10]}"
     return raw
 
-
 def is_valid_phone_korea(raw: str) -> bool:
     d = only_digits(raw)
     return len(d) in (10, 11) and d.startswith(("010", "011", "016", "017", "018", "019"))
-
 
 def format_sales_manwon(raw: str) -> str:
     d = only_digits(raw)
@@ -114,12 +116,10 @@ def format_sales_manwon(raw: str) -> str:
     except:
         return f"{d}만원"
 
-
 def parse_monthly_sales_to_manwon(raw: str) -> int:
     """입력값에서 숫자만 추출하여 '만원' 단위 정수로 변환. 예: '3,000만원' -> 3000"""
     d = only_digits(raw)
     return int(d) if d else 0
-
 
 def business_years_to_months(business_years: str) -> int:
     if business_years == "1년 미만":
@@ -128,13 +128,11 @@ def business_years_to_months(business_years: str) -> int:
         return 24
     return 48
 
-
 # =========================================================
 # A/B/C 등급 + 고객용 요약
 # =========================================================
 def grade_label(g: str) -> str:
     return {"A": "A 적합", "B": "B 보완필요", "C": "C 불가"}.get(g, "B 보완필요")
-
 
 def grade_summary(g: str) -> str:
     if g == "A":
@@ -143,22 +141,18 @@ def grade_summary(g: str) -> str:
         return "일부 요건 보완이 필요해 담당자와 상담 후 진행 권장드립니다."
     return "현재 진행이 어려운 사유가 있어 담당자와 상담 후 진행 권장드립니다."
 
-
 def calc_final_grade(business_years: str, monthly_sales_manwon: int, tax_status: str) -> str:
     """
     최종 정책자금 판정 (자금명 무관, 1개 등급만)
     C: 세금체납=체납 (업력/매출 무관)
     A: 완납 + 업력(1~3년 또는 3년 이상) + 평균월매출 1000만원 '초과'
-    B: 완납 + 그 외(업력 1년 미만이거나, 월매출 1000만원 이하 등)
+    B: 완납 + 그 외
     """
     if tax_status == "체납":
         return "C"
-
     if business_years in ["1~3년", "3년 이상"] and monthly_sales_manwon > 1000:
         return "A"
-
     return "B"
-
 
 # =========================================================
 # Streamlit on_change 콜백(입력 즉시 포맷)
@@ -166,13 +160,11 @@ def calc_final_grade(business_years: str, monthly_sales_manwon: int, tax_status:
 def on_phone_change():
     st.session_state["phone_input"] = format_phone_korea(st.session_state.get("phone_input", ""))
 
-
 def on_sales_change():
     raw = st.session_state.get("sales_input", "")
     formatted = format_sales_manwon(raw)
     if formatted:
         st.session_state["sales_input"] = formatted
-
 
 # =========================================================
 # 정책자금 로드 / 판정 로직 (룰은 유지)
@@ -182,9 +174,7 @@ def load_funds():
     with open("funds.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
-
 funds = load_funds()
-
 
 def check_fund(profile, fund):
     reasons = []
@@ -211,7 +201,6 @@ def check_fund(profile, fund):
     if reasons:
         return "불가", reasons
     return "가능", []
-
 
 # =========================================================
 # 세션 상태 초기화
@@ -335,9 +324,7 @@ if st.session_state.step == 1:
         st.rerun()
         st.stop()
 
-    # ✅ STEP1 화면에서는 여기서 종료 (아래 STEP2 실행 방지)
     st.stop()
-
 
 # =========================================================
 # STEP 2 - 불법브로커 자가진단 체크리스트 + 최종 판정/접수
@@ -385,11 +372,7 @@ if st.session_state.step == 2:
 
     checked_yes = [k for k, v in st.session_state.broker_checks.items() if v == "예"]
 
-    # =========================
-    # 자가진단 결과 (원래 위치)
-    # =========================
     st.subheader("자가진단 결과")
-
     if checked_yes:
         st.error("⚠️ 체크된 항목이 있습니다.")
         st.write("• 제3자 부당개입(불법 브로커) 유형에 해당할 수 있습니다.")
@@ -401,9 +384,6 @@ if st.session_state.step == 2:
 
     st.divider()
 
-    # =========================
-    # STEP2 버튼
-    # =========================
     col1, col2 = st.columns(2)
     with col1:
         if st.button("◀ 이전", use_container_width=True):
@@ -414,9 +394,6 @@ if st.session_state.step == 2:
     with col2:
         do_submit = st.button("최종 판정 & 접수", use_container_width=True)
 
-    # =========================
-    # 최종 판정 결과 + 구글시트 저장
-    # =========================
     if do_submit:
         if not st.session_state.step1_data:
             st.error("STEP 1 정보가 없습니다. 이전으로 돌아가 다시 입력해주세요.")
@@ -437,33 +414,28 @@ if st.session_state.step == 2:
         st.write(f"정책자금 판정 : {grade_label(final_grade)}")
         st.info(f"요약: {grade_summary(final_grade)}")
 
-        broker_is_risky = 1 if checked_yes else 0
+        # ✅ Apps Script 저장 (실사용)
+        row = [
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),   # 1 접수일시
+            s1.get("customer_name", ""),                    # 2 성함
+            s1.get("phone_formatted", ""),                  # 3 전화번호
+            s1.get("company_name", ""),                     # 4 상호명
+            s1.get("biz_type", ""),                         # 5 사업자 유형
+            s1.get("industry", ""),                         # 6 업종
+            s1.get("business_years", ""),                   # 7 업력
+            int(s1.get("business_months", 0)),              # 8 업력(개월)
+            parse_monthly_sales_to_manwon(s1.get("monthly_sales_raw", "")),  # 9 평균월매출(만원)
+            s1.get("tax_status", ""),                       # 10 세금상태
+            "있음" if checked_yes else "없음",              # 11 브로커위험
+            grade_label(final_grade),                       # 12 판정등급
+            grade_summary(final_grade),                     # 13 판정요약
+        ]
 
-        # ✅ 구글시트 저장 (실사용)
-        try:
-            append_to_sheet([
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),   # 1 접수일시
-                s1.get("customer_name", ""),                    # 2 성함
-                s1.get("phone_formatted", ""),                  # 3 전화번호
-                s1.get("company_name", ""),                     # 4 상호명
-                s1.get("biz_type", ""),                         # 5 사업자 유형
-                s1.get("industry", ""),                         # 6 업종
-                s1.get("business_years", ""),                   # 7 업력
-                int(s1.get("business_months", 0)),              # 8 업력(개월)
-                parse_monthly_sales_to_manwon(
-                    s1.get("monthly_sales_raw", "")
-                ),                                              # 9 평균월매출(만원, 숫자)
-                s1.get("tax_status", ""),                       # 10 세금상태
-                "있음" if checked_yes else "없음",              # 11 브로커위험
-                grade_label(final_grade),                       # 12 판정등급
-                grade_summary(final_grade),                     # 13 판정요약
-            ])
-
+        ok, msg = append_to_sheet(row)
+        if ok:
             st.success("접수 기록이 저장되었습니다.")
-        except Exception as e:
-            st.error("접수 저장에 실패했습니다. (구글시트 공유/시트명/탭명/Secrets 확인)")
-            st.exception(e)
+        else:
+            st.error("접수 저장에 실패했습니다. (Apps Script URL/권한/토큰 확인)")
+            st.write(msg)
 
-    # ✅ STEP2 끝나면 아래 실행 방지
     st.stop()
-
