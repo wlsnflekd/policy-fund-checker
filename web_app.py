@@ -12,52 +12,45 @@ st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", lay
 
 st.markdown("""
 <style>
-/* ===============================
-   Streamlit 하단 footer 제거
-   =============================== */
-footer {visibility: hidden;}
-footer:after {
-    content:'';
-    display:block;
-    height:0;
+/* ===== Streamlit 기본 UI 요소 숨김 ===== */
+
+/* 하단 footer 영역 */
+footer {display: none !important;}
+/* 구버전/신버전 footer 컨테이너 대응 */
+[data-testid="stFooter"] {display: none !important;}
+/* "Hosted with Streamlit" 배지(빨간 버튼) */
+.viewerBadge_container__1QSob,
+.viewerBadge_container,
+[data-testid="stViewerBadge"] {
+  display: none !important;
 }
 
-/* 우하단 Streamlit 버튼 제거 (모바일 포함) */
-a[href*="streamlit.io"] {
-    display: none !important;
-}
+/* 우측 상단 툴바/메뉴(필요하면) */
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+[data-testid="stToolbar"] {display: none !important;}
+[data-testid="stDecoration"] {display: none !important;}
+[data-testid="stStatusWidget"] {display: none !important;}
 
-/* ===============================
-   입력 박스 / 드롭다운 UI 스타일
-   =============================== */
-
-/* 입력 박스(텍스트 / 숫자) */
+/* ===== 입력 박스/드롭다운 UI 스타일(네가 쓰던 것 유지) ===== */
 div[data-baseweb="input"] > div {
     background-color: rgba(255,255,255,0.12) !important;
     border: 1px solid rgba(255,255,255,0.35) !important;
     border-radius: 8px;
 }
-
-/* selectbox(드롭다운) 본체 */
 div[data-baseweb="select"] > div {
     background-color: rgba(255,255,255,0.12) !important;
     border: 1px solid rgba(255,255,255,0.35) !important;
     border-radius: 8px;
 }
-
-/* selectbox 펼쳐졌을 때 옵션 리스트 */
 div[data-baseweb="popover"] {
     background-color: rgba(18,18,18,0.98) !important;
     border: 1px solid rgba(255,255,255,0.25) !important;
     border-radius: 8px;
 }
-
-/* 옵션 hover */
 div[data-baseweb="menu"] div[role="option"]:hover {
     background-color: rgba(255,255,255,0.12) !important;
 }
-
-/* 라벨 글씨 */
 label,
 .stTextInput label,
 .stSelectbox label,
@@ -455,5 +448,6 @@ if st.session_state.step == 2:
             st.write(msg)
 
     st.stop()
+
 
 
