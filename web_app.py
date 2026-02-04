@@ -3,13 +3,16 @@ import re
 from datetime import datetime
 
 import streamlit as st
-import gspread
+import requests
 from google.oauth2.service_account import Credentials
 
 # =========================================================
 # 기본 설정
 # =========================================================
 st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", layout="centered")
+
+APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]   # 웹앱 URL
+APPS_SCRIPT_TOKEN = st.secrets["APPS_SCRIPT_TOKEN"]  # 토큰
 
 # ✅ 구글시트 파일명(구글드라이브에서 보이는 문서 제목과 정확히 일치)
 GSHEET_NAME = "정책자금 툴"
@@ -463,3 +466,4 @@ if st.session_state.step == 2:
 
     # ✅ STEP2 끝나면 아래 실행 방지
     st.stop()
+
