@@ -1,0 +1,25 @@
+[
+  {
+    "id": "fund_001",
+    "name": "정책자금 A (예시)",
+    "eligibility": {
+      "min_business_months": 6,
+      "allowed_business_types": ["개인", "법인"],
+      "allowed_industries": ["제조", "도소매", "서비스"]
+    },
+    "exclusions": [
+      {
+        "field": "is_tax_delinquent",
+        "op": "==",
+        "value": true,
+        "reason": "세금 체납"
+      },
+      {
+        "field": "has_financial_delinquency",
+        "op": "==",
+        "value": true,
+        "reason": "금융 연체/채무불이행"
+      }
+    ]
+  }
+]
