@@ -5,44 +5,29 @@ from datetime import datetime
 import requests
 import streamlit as st
 
-def append_to_sheet(row: list):
-    """
-    row: [접수일시, 성함, 전화번호, ...] 형태의 리스트
-    return: (ok: bool, msg: str)
-    """
+def append_to_sheet(row):
+    url = st.secrets.get("APPS_SCRIPT_URL", "")
+    token = st.secrets.get("APPS_SCRIPT_TOKEN", "")  # 여기엔 policy2026! 가 들어있어야 함
+
+    if not url:
+        return False, "APPS_SCRIPT_URL 없음"
+    if not token:
+        return False, "APPS_SCRIPT_TOKEN 없음"
+
+    payload = {
+        "token": token,
+        "action": "append_row",
+        "row": row
+    }
+
     try:
-        url = st.secrets.get("APPS_SCRIPT_URL", "")
-        token = st.secrets.get("APPS_SCRIPT_TOKEN", "")
-
-        if not url:
-            return False, "APPS_SCRIPT_URL이 비어있습니다. Streamlit secrets 확인."
-        if not token:
-            return False, "APPS_SCRIPT_TOKEN이 비어있습니다. Streamlit secrets 확인."
-
-        payload = {
-            "token": token,
-            "action": "append",
-            "row": row
-        }
-
         r = requests.post(url, json=payload, timeout=15)
-
-        # HTTP 에러면 본문을 그대로 보여주기
         if r.status_code != 200:
             return False, f"HTTP {r.status_code}: {r.text}"
-
-        # Apps Script가 JSON으로 {ok:true/false, msg:"..."} 반환한다고 가정
-        try:
-            data = r.json()
-        except Exception:
-            return False, f"응답이 JSON이 아닙니다: {r.text}"
-
-        ok = bool(data.get("ok", False))
-        msg = str(data.get("msg", data))
-        return ok, msg
-
+        data = r.json()
+        return bool(data.get("ok")), str(data.get("message", data))
     except Exception as e:
-        return False, f"append_to_sheet 예외: {e}"
+        return False, f"예외: {e}"
 
 # =========================================================
 # 기본 설정
@@ -454,6 +439,7 @@ if st.session_state.step == 2:
         st.write(msg)  # 실패 원인(HTTP/권한/토큰/응답내용) 그대로 출력
 
     st.stop()
+
 
 
 
