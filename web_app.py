@@ -80,9 +80,9 @@ st.markdown(
 st.markdown("""
 <style>
 
-/* ===== 페이지 최상단 여백 제거 (핵심) ===== */
+/* ===== 페이지 최상단 여백 제거 ===== */
 .block-container {
-  padding-top: 0.4rem !important;
+  padding-top: 0.3rem !important;
 }
 
 /* Streamlit 기본 헤더 공간 제거 */
@@ -90,7 +90,7 @@ header {
   height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
-  visibility: hidden;
+  visibility: hidden !important;
 }
 
 /* 앱 전체 상단 여백 제거 (웹 + 모바일) */
@@ -98,17 +98,27 @@ header {
   padding-top: 0 !important;
 }
 
-/* footer / 배지 제거 */
+/* ===== footer / Streamlit Cloud 배지 완전 제거 ===== */
 footer,
 [data-testid="stFooter"],
 .viewerBadge_container__1QSob,
 .viewerBadge_container,
+.viewerBadge_link__1S137,
+.viewerBadge_text__1vQJk,
 [data-testid="stViewerBadge"] {
   display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+}
+
+/* 모바일 하단 Safe Area까지 밀어내는 요소 제거 */
+[data-testid="stAppViewContainer"] footer {
+  display: none !important;
+  height: 0 !important;
 }
 
 /* 상단 메뉴 / 툴바 제거 */
-#MainMenu { visibility: hidden; }
+#MainMenu { visibility: hidden !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
@@ -530,6 +540,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
