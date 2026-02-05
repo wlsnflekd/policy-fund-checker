@@ -444,7 +444,7 @@ if st.session_state.step == 2:
 
         st.divider()
         st.subheader("정책자금 판정 결과")
-        st.write(f"정책자금 판정 : {grade_label(final_grade)}")
+        render_grade_badge(final_grade)
         st.info(f"요약: {grade_summary(final_grade)}")
 
         # ✅ Apps Script 저장 (실사용)
@@ -472,4 +472,5 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
