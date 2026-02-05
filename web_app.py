@@ -7,18 +7,14 @@ import streamlit as st
 
 def append_to_sheet(row):
     url = st.secrets.get("APPS_SCRIPT_URL", "")
-    token = st.secrets.get("APPS_SCRIPT_TOKEN", "")  # 여기엔 policy2026! 가 들어있어야 함
+    token = st.secrets.get("APPS_SCRIPT_TOKEN", "")
 
     if not url:
         return False, "APPS_SCRIPT_URL 없음"
     if not token:
         return False, "APPS_SCRIPT_TOKEN 없음"
 
-    payload = {
-        "token": token,
-        "action": "append_row",
-        "row": row
-    }
+    payload = {"token": token, "action": "append_row", "row": row}
 
     try:
         r = requests.post(url, json=payload, timeout=15)
@@ -34,29 +30,23 @@ def append_to_sheet(row):
 # =========================================================
 st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", layout="centered")
 
-st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-
 # 🔹 상단 중앙 로고 (Streamlit 방식)
+st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns([1, 2, 1])
-
 with col2:
     st.image("logo.png", width=260)
 
 st.markdown("<hr style='opacity:0.15'>", unsafe_allow_html=True)
 
+# 🔹 CSS
+st.markdown("""
 <style>
-/* ===== Streamlit 기본 UI 요소 숨김 ===== */
-
 footer,
-[data-testid="stFooter"] {
-  display: none !important;
-}
+[data-testid="stFooter"] { display: none !important; }
 
 .viewerBadge_container__1QSob,
 .viewerBadge_container,
-[data-testid="stViewerBadge"] {
-  display: none !important;
-}
+[data-testid="stViewerBadge"] { display: none !important; }
 
 #MainMenu { visibility: hidden; }
 header { visibility: hidden; }
@@ -64,7 +54,6 @@ header { visibility: hidden; }
 [data-testid="stDecoration"] { display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
 
-/* ===== 입력 박스/드롭다운 UI ===== */
 div[data-baseweb="input"] > div {
   background-color: rgba(255,255,255,0.12) !important;
   border: 1px solid rgba(255,255,255,0.35) !important;
@@ -479,6 +468,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
