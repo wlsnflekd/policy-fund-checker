@@ -2,9 +2,6 @@ import json
 import re
 from datetime import datetime
 
-import streamlit as st
-import requests
-
 import requests
 import streamlit as st
 
@@ -456,6 +453,7 @@ if st.session_state.step == 2:
         st.write(msg)  # 실패 원인(HTTP/권한/토큰/응답내용) 그대로 출력
 
     st.stop()
+
 
 
 
