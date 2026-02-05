@@ -79,19 +79,41 @@ st.markdown(
 # 🔹 CSS
 st.markdown("""
 <style>
-footer,
-[data-testid="stFooter"] { display: none !important; }
 
+/* ===== 페이지 최상단 여백 제거 (핵심) ===== */
+.block-container {
+  padding-top: 0.4rem !important;
+}
+
+/* Streamlit 기본 헤더 공간 제거 */
+header {
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  visibility: hidden;
+}
+
+/* 앱 전체 상단 여백 제거 (웹 + 모바일) */
+[data-testid="stAppViewContainer"] > .main {
+  padding-top: 0 !important;
+}
+
+/* footer / 배지 제거 */
+footer,
+[data-testid="stFooter"],
 .viewerBadge_container__1QSob,
 .viewerBadge_container,
-[data-testid="stViewerBadge"] { display: none !important; }
+[data-testid="stViewerBadge"] {
+  display: none !important;
+}
 
+/* 상단 메뉴 / 툴바 제거 */
 #MainMenu { visibility: hidden; }
-header { visibility: hidden; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
 [data-testid="stStatusWidget"] { display: none !important; }
 
+/* ===== 입력 UI 스타일 ===== */
 div[data-baseweb="input"] > div {
   background-color: rgba(255,255,255,0.12) !important;
   border: 1px solid rgba(255,255,255,0.35) !important;
@@ -114,6 +136,7 @@ div[data-baseweb="menu"] div[role="option"]:hover {
   background-color: rgba(255,255,255,0.12) !important;
 }
 
+/* 라벨 */
 label,
 .stTextInput label,
 .stSelectbox label,
@@ -121,6 +144,7 @@ label,
   color: rgba(255,255,255,0.95) !important;
   font-weight: 500;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -506,6 +530,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
