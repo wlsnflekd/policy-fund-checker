@@ -12,51 +12,57 @@ st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", lay
 
 st.markdown("""
 <style>
-/* ===== 하단/배지/푸터 전부 숨김 (모바일 포함) ===== */
-footer, [data-testid="stFooter"] { 
-  display: none !important; 
+/* ===== Streamlit 기본 UI 요소 숨김 ===== */
+
+footer,
+[data-testid="stFooter"] {
+  display: none !important;
 }
 
-/* Hosted with Streamlit / viewer badge (모바일에서 다르게 뜨는 케이스 포함) */
 .viewerBadge_container__1QSob,
 .viewerBadge_container,
-[data
+[data-testid="stViewerBadge"] {
+  display: none !important;
+}
 
-APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]        # Apps Script 웹앱 URL
-APPS_SCRIPT_TOKEN = st.secrets["APPS_SCRIPT_TOKEN"]    # 토큰(임의 문자열)
+#MainMenu { visibility: hidden; }
+header { visibility: hidden; }
+[data-testid="stToolbar"] { display: none !important; }
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stStatusWidget"] { display: none !important; }
 
-# =========================================================
-# Apps Script 저장 유틸 (구글 서비스계정 제거)
-# =========================================================
-def append_to_sheet(row: list) -> tuple[bool, str]:
-    """
-    row: 시트에 추가할 1행 리스트
-    Apps Script Web App으로 row를 전달해서 appendRow 하도록 함.
-    return: (성공여부, 메시지)
-    """
-    try:
-        res = requests.post(
-            APPS_SCRIPT_URL,
-            json={
-                "token": APPS_SCRIPT_TOKEN,
-                "action": "append_row",
-                "row": row,
-            },
-            timeout=15,
-        )
+/* ===== 입력 박스/드롭다운 UI ===== */
+div[data-baseweb="input"] > div {
+  background-color: rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.35) !important;
+  border-radius: 8px;
+}
 
-        # Apps Script가 JSON을 못 주고 text로 주는 경우도 대비
-        try:
-            out = res.json()
-        except Exception:
-            out = {"ok": res.ok, "message": res.text}
+div[data-baseweb="select"] > div {
+  background-color: rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.35) !important;
+  border-radius: 8px;
+}
 
-        if res.ok and out.get("ok") is True:
-            return True, out.get("message", "저장 완료")
-        return False, out.get("message", f"저장 실패 (HTTP {res.status_code})")
+div[data-baseweb="popover"] {
+  background-color: rgba(18,18,18,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 8px;
+}
 
-    except Exception as e:
-        return False, f"저장 요청 예외: {e}"
+div[data-baseweb="menu"] div[role="option"]:hover {
+  background-color: rgba(255,255,255,0.12) !important;
+}
+
+label,
+.stTextInput label,
+.stSelectbox label,
+.stRadio label {
+  color: rgba(255,255,255,0.95) !important;
+  font-weight: 500;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # =========================================================
 # 포맷/검증 유틸
@@ -409,6 +415,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
     st.stop()
+
 
 
 
