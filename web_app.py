@@ -45,7 +45,7 @@ st.markdown(
         display:flex;
         align-items:center;
         justify-content:center;
-        gap:14px;
+        gap:10px;
         padding:18px 0 10px 0;
         background:#ffffff;
       }}
@@ -506,6 +506,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
