@@ -21,6 +21,7 @@ def append_to_sheet(row: list):
 
         payload = {
             "token": token,
+            "action": "append",
             "row": row
         }
 
@@ -453,6 +454,7 @@ if st.session_state.step == 2:
         st.write(msg)  # 실패 원인(HTTP/권한/토큰/응답내용) 그대로 출력
 
     st.stop()
+
 
 
 
