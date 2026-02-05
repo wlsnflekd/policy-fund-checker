@@ -36,19 +36,14 @@ st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", lay
 
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-# 🔹 상단 중앙 로고
-st.markdown(
-    """
-    <div style="width:100%; text-align:center; padding:20px 0 16px 0;">
-        <img src="logo.png" style="width:200px;" />
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# 🔹 상단 중앙 로고 (Streamlit 방식)
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col2:
+    st.image("logo.png", width=260)
 
 st.markdown("<hr style='opacity:0.15'>", unsafe_allow_html=True)
 
-st.markdown("""
 <style>
 /* ===== Streamlit 기본 UI 요소 숨김 ===== */
 
@@ -484,6 +479,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
