@@ -364,14 +364,12 @@ if st.session_state.step == 1:
 # =========================================================
 if st.session_state.step == 2:
     # STEP2 진입 시 상단으로 스크롤
-    st.markdown("<div id='top'></div>", unsafe_allow_html=True)
     st.markdown(
         """
         <script>
-          setTimeout(function() {
-            const el = document.getElementById('top');
-            if (el) el.scrollIntoView({behavior: 'auto'});
-          }, 50);
+          document.body.scrollTop = 0;
+          document.documentElement.scrollTop = 0;
+          window.scrollTo(0, 0);
         </script>
         """,
         unsafe_allow_html=True,
@@ -472,5 +470,6 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
