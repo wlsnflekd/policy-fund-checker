@@ -12,54 +12,15 @@ st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", lay
 
 st.markdown("""
 <style>
-/* ===== Streamlit 기본 UI 요소 숨김 ===== */
+/* ===== 하단/배지/푸터 전부 숨김 (모바일 포함) ===== */
+footer, [data-testid="stFooter"] { 
+  display: none !important; 
+}
 
-/* 하단 footer 영역 */
-footer {display: none !important;}
-/* 구버전/신버전 footer 컨테이너 대응 */
-[data-testid="stFooter"] {display: none !important;}
-/* "Hosted with Streamlit" 배지(빨간 버튼) */
+/* Hosted with Streamlit / viewer badge (모바일에서 다르게 뜨는 케이스 포함) */
 .viewerBadge_container__1QSob,
 .viewerBadge_container,
-[data-testid="stViewerBadge"] {
-  display: none !important;
-}
-
-/* 우측 상단 툴바/메뉴(필요하면) */
-#MainMenu {visibility: hidden;}
-header {visibility: hidden;}
-[data-testid="stToolbar"] {display: none !important;}
-[data-testid="stDecoration"] {display: none !important;}
-[data-testid="stStatusWidget"] {display: none !important;}
-
-/* ===== 입력 박스/드롭다운 UI 스타일(네가 쓰던 것 유지) ===== */
-div[data-baseweb="input"] > div {
-    background-color: rgba(255,255,255,0.12) !important;
-    border: 1px solid rgba(255,255,255,0.35) !important;
-    border-radius: 8px;
-}
-div[data-baseweb="select"] > div {
-    background-color: rgba(255,255,255,0.12) !important;
-    border: 1px solid rgba(255,255,255,0.35) !important;
-    border-radius: 8px;
-}
-div[data-baseweb="popover"] {
-    background-color: rgba(18,18,18,0.98) !important;
-    border: 1px solid rgba(255,255,255,0.25) !important;
-    border-radius: 8px;
-}
-div[data-baseweb="menu"] div[role="option"]:hover {
-    background-color: rgba(255,255,255,0.12) !important;
-}
-label,
-.stTextInput label,
-.stSelectbox label,
-.stRadio label {
-    color: rgba(255,255,255,0.95) !important;
-    font-weight: 500;
-}
-</style>
-""", unsafe_allow_html=True)
+[data
 
 APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]        # Apps Script 웹앱 URL
 APPS_SCRIPT_TOKEN = st.secrets["APPS_SCRIPT_TOKEN"]    # 토큰(임의 문자열)
@@ -448,6 +409,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
     st.stop()
+
 
 
 
