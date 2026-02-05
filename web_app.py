@@ -154,6 +154,39 @@ def calc_final_grade(business_years: str, monthly_sales_manwon: int, tax_status:
         return "A"
     return "B"
 
+def render_grade_badge(grade: str):
+    if grade == "A":
+        color = "#2e7d32"   # 초록
+        bg = "rgba(46,125,50,0.15)"
+        text = "A 적합"
+    elif grade == "B":
+        color = "#f9a825"   # 노랑
+        bg = "rgba(249,168,37,0.18)"
+        text = "B 보완필요"
+    else:
+        color = "#c62828"   # 빨강
+        bg = "rgba(198,40,40,0.15)"
+        text = "C 불가"
+
+    st.markdown(
+        f"""
+        <div style="
+            padding:14px 16px;
+            border-radius:10px;
+            font-weight:700;
+            font-size:18px;
+            color:{color};
+            background:{bg};
+            border:1px solid {color};
+            margin-top:8px;
+            margin-bottom:4px;
+        ">
+            정책자금 판정 : {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 # =========================================================
 # Streamlit on_change 콜백(입력 즉시 포맷)
 # =========================================================
@@ -439,3 +472,4 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
