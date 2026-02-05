@@ -423,7 +423,7 @@ if st.session_state.step == 2:
             s1.get("biz_type", ""),                         # 5 사업자 유형
             s1.get("industry", ""),                         # 6 업종
             s1.get("business_years", ""),                   # 7 업력
-            int(s1.get("business_months", 0)),              # 8 업력(개월)
+            int(s1.get("business_months", 0) or 0),         # 8 업력(개월)
             parse_monthly_sales_to_manwon(s1.get("monthly_sales_raw", "")),  # 9 평균월매출(만원)
             s1.get("tax_status", ""),                       # 10 세금상태
             "있음" if checked_yes else "없음",              # 11 브로커위험
@@ -431,20 +431,11 @@ if st.session_state.step == 2:
             grade_summary(final_grade),                     # 13 판정요약
         ]
 
-    ok, msg = append_to_sheet(row)
-    if ok:
-        st.success("접수 기록이 저장되었습니다.")
-    else:
-        st.error("접수 저장 실패")
-        st.write(msg)  # 실패 원인(HTTP/권한/토큰/응답내용) 그대로 출력
+        ok, msg = append_to_sheet(row)
+        if ok:
+            st.success("접수 기록이 저장되었습니다.")
+        else:
+            st.error("접수 저장 실패")
+            st.write(msg)
 
-    st.stop()
-
-
-
-
-
-
-
-
-
+        st.stop()
