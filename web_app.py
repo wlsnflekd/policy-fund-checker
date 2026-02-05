@@ -36,8 +36,15 @@ st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", lay
 
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-# 로고(여백이 많아서 크게 보여줘야 함)
-st.image("logo.png", width=260)
+# 🔹 상단 중앙 로고
+st.markdown(
+    """
+    <div style="width:100%; text-align:center; padding:20px 0 16px 0;">
+        <img src="logo.png" style="width:400px;" />
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown("<hr style='opacity:0.15'>", unsafe_allow_html=True)
 
@@ -477,6 +484,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
