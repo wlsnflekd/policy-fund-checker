@@ -34,25 +34,12 @@ def append_to_sheet(row):
 # =========================================================
 st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", layout="centered")
 
-col1, col2 = st.columns([1, 6])
+st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-with col1:
-    st.image("logo.png", width=50)
+# 로고(여백이 많아서 크게 보여줘야 함)
+st.image("logo.png", width=180)
 
-with col2:
-    st.markdown(
-        """
-        <div style="
-            font-size:22px;
-            font-weight:700;
-            margin-top:10px;
-            color:rgba(255,255,255,0.95);
-        ">
-            성장자금지원센터
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+st.markdown("<hr style='opacity:0.15'>", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
@@ -490,6 +477,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
