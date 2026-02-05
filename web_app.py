@@ -40,7 +40,7 @@ st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 st.markdown(
     """
     <div style="width:100%; text-align:center; padding:20px 0 16px 0;">
-        <img src="logo.png" style="width:400px;" />
+        <img src="logo.png" style="width:200px;" />
     </div>
     """,
     unsafe_allow_html=True,
@@ -484,6 +484,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
