@@ -30,13 +30,51 @@ def append_to_sheet(row):
 # =========================================================
 st.set_page_config(page_title="정책자금 조건 체크", page_icon="✅", layout="centered")
 
-# 🔹 상단 중앙 로고 (Streamlit 방식)
-st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.image("logo.png", width=1000)
+import base64
 
-st.markdown("<hr style='opacity:0.15'>", unsafe_allow_html=True)
+def get_base64(file_path):
+    with open(file_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+logo_base64 = get_base64("logo.png")
+
+st.markdown(
+    f"""
+    <style>
+      .sj-header {{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:14px;
+        padding:18px 0 10px 0;
+        background:#ffffff;
+      }}
+      .sj-header img {{
+        height:48px;
+        width:auto;
+      }}
+      .sj-header .title {{
+        font-size:28px;
+        font-weight:700;
+        color:#1f3a5f;
+        letter-spacing:-0.5px;
+        white-space:nowrap;
+      }}
+      @media (max-width: 480px) {{
+        .sj-header img {{ height:40px; }}
+        .sj-header .title {{ font-size:22px; }}
+      }}
+    </style>
+
+    <div class="sj-header">
+      <img src="data:image/png;base64,{logo_base64}" />
+      <div class="title">성장자금지원센터</div>
+    </div>
+
+    <hr style="opacity:0.15; margin:0 0 10px 0;">
+    """,
+    unsafe_allow_html=True
+)
 
 # 🔹 CSS
 st.markdown("""
@@ -468,6 +506,7 @@ if st.session_state.step == 2:
             st.write(msg)
 
         st.stop()
+
 
 
 
